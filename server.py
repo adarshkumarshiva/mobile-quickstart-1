@@ -30,7 +30,7 @@ def token():
   # This allows incoming connections to client (if specified)
   client = request.values.get('client')
   if client != None:
-    capability.allow_client_incoming("cupola")
+    capability.allow_client_incoming("cupolaConference")
 
   # This returns a token to use with Twilio based on the account and capabilities defined above
   return capability.generate()
