@@ -4,14 +4,14 @@ from twilio.util import TwilioCapability
 import twilio.twiml
 
 # Account Sid and Auth Token can be found in your account dashboard
-ACCOUNT_SID = 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-AUTH_TOKEN = 'YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY'
+ACCOUNT_SID = 'ACf3713370daf708c78e7c405f76bbd718'
+AUTH_TOKEN = 'b04ca0ba46054da1d1ca80d42c1bfd73'
 
 # TwiML app outgoing connections will use
-APP_SID = 'APZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ'
+APP_SID = 'AP4e18fa3573616c9fc910c6c3305ab49d'
 
-CALLER_ID = '+12345678901'
-CLIENT = 'jenny'
+CALLER_ID = '+14085122036'
+CLIENT = 'cupolaConference'
 
 app = Flask(__name__)
 
@@ -30,7 +30,7 @@ def token():
   # This allows incoming connections to client (if specified)
   client = request.values.get('client')
   if client != None:
-    capability.allow_client_incoming(client)
+    capability.allow_client_incoming("cupola")
 
   # This returns a token to use with Twilio based on the account and capabilities defined above
   return capability.generate()
@@ -59,6 +59,36 @@ def call():
     # client -> PSTN
     resp.dial(to, callerId=caller_id)
   return str(resp)
+
+@app.route('/callconference', methods=['GET', 'POST'])
+def callconference():
+  """ This method routes calls from/to client                  """
+  """ Rules: 1. From can be either client:name or PSTN number  """
+  """        2. To value specifies target. When call is coming """
+  """           from PSTN, To value is ignored and call is     """
+  """           routed to client named CLIENT                  """
+  resp = twilio.twiml.Response()
+ 
+  
+  responsetring = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Say>Joining a conference room</Say><Dial><Conference>MyRoom</Conference></Dial></Response>"
+  return responsetring
+  from_value = request.values.get('From')
+  to = request.values.get('To')
+  if not (from_value and to):
+    return str(resp.say("Invalid request"))
+  from_client = from_value.startswith('client')
+  caller_id = os.environ.get("CALLER_ID", CALLER_ID)
+  if not from_client:
+    # PSTN -> client
+    resp.dial(callerId=from_value).client(CLIENT)
+  elif to.startswith("client:"):
+    # client -> client
+    resp.dial(callerId=from_value).client(to[7:])
+  else:
+    # client -> PSTN
+    resp.dial(to, callerId=caller_id)
+  return str(resp)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def welcome():
